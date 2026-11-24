@@ -341,10 +341,12 @@ newAsyncIO(void *that, IOMemoryDescriptor* dataBuffer, uint32_t bytesTransferred
 
 void CIntelBTPatcher::captureIntelInterruptPipe(void *that, StandardUSB::EndpointDescriptor const *descriptor, IOUSBHostDevice *device)
 {
-    if (!device)
+    if (!device || !descriptor)
         return;
     const StandardUSB::DeviceDescriptor *deviceDescriptor = device->getDeviceDescriptor();
-    if (deviceDescriptor && deviceDescriptor->idVendor == VENDOR_USB_INTEL) {
+    // Intel USB hubs also have interrupt endpoints; do not replace the Bluetooth pipe.
+    if (deviceDescriptor && deviceDescriptor->idVendor == VENDOR_USB_INTEL &&
+        deviceDescriptor->bDeviceClass != kUSBHostHubClass) {
         uint8_t epType = StandardUSB::getEndpointType(descriptor);
         if (epType == kIOUSBEndpointTypeInterrupt)
             CIntelBTPatcher::_hookPipeInstance = that;
